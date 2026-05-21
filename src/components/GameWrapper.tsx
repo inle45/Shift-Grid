@@ -1,19 +1,20 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import type { GameId } from '../types'
 import { GAME_CONFIGS } from '../types'
+import { sfx } from '../sfx'
 
-const TapRush = lazy(() => import('../games/TapRush'))
-const SwipeChain = lazy(() => import('../games/SwipeChain'))
-const Clicker = lazy(() => import('../games/Clicker'))
+const TapRush       = lazy(() => import('../games/TapRush'))
+const SwipeChain    = lazy(() => import('../games/SwipeChain'))
+const Clicker       = lazy(() => import('../games/Clicker'))
 const PulseCollector = lazy(() => import('../games/PulseCollector'))
-const ComboBlitz = lazy(() => import('../games/ComboBlitz'))
+const ComboBlitz    = lazy(() => import('../games/ComboBlitz'))
 
 const GAME_COMPONENTS = {
-  'tap-rush': TapRush,
-  'swipe-chain': SwipeChain,
-  'clicker': Clicker,
+  'tap-rush':        TapRush,
+  'swipe-chain':     SwipeChain,
+  'clicker':         Clicker,
   'pulse-collector': PulseCollector,
-  'combo-blitz': ComboBlitz,
+  'combo-blitz':     ComboBlitz,
 }
 
 type Phase = 'countdown' | 'playing' | 'ended'
@@ -26,52 +27,60 @@ interface Props {
 
 export default function GameWrapper({ gameId, onGameEnd, onExit }: Props) {
   const cfg = GAME_CONFIGS[gameId]
-  const [phase, setPhase] = useState<Phase>('countdown')
+  const [phase, setPhase]       = useState<Phase>('countdown')
   const [countdown, setCountdown] = useState(3)
-  const [timeLeft, setTimeLeft] = useState(cfg.duration)
-  const [score, setScore] = useState(0)
-  const [scoreKey, setScoreKey] = useState(0)
+  const [timeLeft, setTimeLeft]  = useState(cfg.duration)
+  const [score, setScore]        = useState(0)
+  const [scoreKey, setScoreKey]  = useState(0)
 
-  const scoreRef = useRef(0)
+  const scoreRef   = useRef(0)
+  const mountedRef = useRef(true)
+
+  useEffect(() => () => { mountedRef.current = false }, [])
 
   const handleScore = useCallback((delta: number) => {
-    scoreRef.current += delta
+    scoreRef.current = Math.max(0, scoreRef.current + delta)
     setScore(scoreRef.current)
     setScoreKey(k => k + 1)
   }, [])
 
-  // Countdown 3→2→1→GO
+  // Countdown 3 → 2 → 1 → GO
   useEffect(() => {
     if (phase !== 'countdown') return
     if (countdown <= 0) {
+      sfx.go()
       setPhase('playing')
       return
     }
+    sfx.countdown()
     const t = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(t)
   }, [phase, countdown])
 
-  // Game timer
+  // Game timer — FIX: don't cancel the onGameEnd timeout in cleanup
   useEffect(() => {
     if (phase !== 'playing') return
     if (timeLeft <= 0) {
       setPhase('ended')
-      const t = setTimeout(() => onGameEnd(scoreRef.current), 700)
-      return () => clearTimeout(t)
+      sfx.gameEnd()
+      // No return value: this timeout must NOT be cancelled by the effect cleanup
+      window.setTimeout(() => {
+        if (mountedRef.current) onGameEnd(scoreRef.current)
+      }, 900)
+      return
     }
-    const t = setTimeout(() => setTimeLeft(t => t - 1), 1000)
+    const t = window.setTimeout(() => setTimeLeft(t => t - 1), 1000)
     return () => clearTimeout(t)
   }, [phase, timeLeft, onGameEnd])
 
   const GameComponent = GAME_COMPONENTS[gameId]
   const pct = (timeLeft / cfg.duration) * 100
   const isActive = phase === 'playing'
-
-  // Timer color: green → yellow → red
-  const timerColor = pct > 50 ? cfg.color : pct > 25 ? '#FFD600' : '#FF0066'
+  const timerColor = pct > 50 ? cfg.color : pct > 20 ? '#FFD600' : '#FF0066'
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ touchAction: 'none' }}>
+
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 gap-3" style={{ flexShrink: 0 }}>
         <button
@@ -82,22 +91,16 @@ export default function GameWrapper({ gameId, onGameEnd, onExit }: Props) {
           ✕
         </button>
 
-        <span
-          className="font-display text-sm font-bold tracking-widest"
-          style={{ color: cfg.color }}
-        >
+        <span className="font-display text-sm font-bold tracking-widest" style={{ color: cfg.color }}>
           {cfg.name}
         </span>
 
-        {/* Score */}
-        <div className="flex items-center gap-1">
-          <span
-            key={scoreKey}
-            className="font-display text-2xl font-black score-animated"
-            style={{ color: cfg.color, minWidth: '2.5ch', textAlign: 'right' }}
-          >
-            {score}
-          </span>
+        <div
+          key={scoreKey}
+          className="font-display text-2xl font-black score-animated"
+          style={{ color: cfg.color, minWidth: '2.5ch', textAlign: 'right' }}
+        >
+          {score}
         </div>
       </div>
 
@@ -120,7 +123,6 @@ export default function GameWrapper({ gameId, onGameEnd, onExit }: Props) {
           <GameComponent isActive={isActive} onScore={handleScore} />
         </Suspense>
 
-        {/* Countdown overlay */}
         {phase === 'countdown' && (
           <div className="countdown-overlay">
             <div key={countdown} className="countdown-number" style={{ color: cfg.color }}>
@@ -129,17 +131,16 @@ export default function GameWrapper({ gameId, onGameEnd, onExit }: Props) {
           </div>
         )}
 
-        {/* Time's up overlay */}
         {phase === 'ended' && (
           <div className="countdown-overlay">
-            <div className="countdown-number text-4xl" style={{ color: cfg.color }}>
+            <div className="countdown-number" style={{ color: cfg.color, fontSize: '4rem' }}>
               FINI !
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Bottom hint ── */}
+      {/* ── Hint ── */}
       {phase === 'playing' && (
         <div className="pb-3 text-center text-xs" style={{ color: 'var(--muted)', flexShrink: 0 }}>
           {cfg.tagline}
