@@ -2,8 +2,8 @@
   "name": "RUSH — Mini-jeux de réflexes",
   "short_name": "RUSH",
   "description": "5 mini-jeux de réflexes ultra-rapides. Tape, enchaîne, chronomètre !",
-  "start_url": "/Shift-Grid/",
-  "scope": "/Shift-Grid/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0A0A0F",
@@ -12,30 +12,22 @@
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-maskable-512.png",
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "icons/screenshot-1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "label": "Menu principal"
     }
   ]
 }
