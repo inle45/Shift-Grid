@@ -3,14 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0A0A0F" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RUSH" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+    <!-- SEO / Store -->
+    <meta name="description" content="5 mini-jeux de réflexes ultra-rapides. Tape, enchaîne, chronomètre !" />
+    <meta name="keywords" content="jeux, réflexes, mini-jeux, arcade, tap" />
+
     <title>RUSH</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Enregistrement du Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {})
+        })
+      }
+    </script>
   </body>
 </html>

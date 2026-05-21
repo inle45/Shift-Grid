@@ -27,7 +27,33 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      # Génère les icônes PNG depuis le SVG avec ImageMagick
+      - name: Generate PWA icons
+        run: |
+          mkdir -p public/icons
+
+          # icon-512.png — plein format
+          convert -background '#0A0A0F' \
+            -fill '#00D4FF' -font DejaVu-Sans-Bold -pointsize 280 \
+            -size 512x512 -gravity Center label:'R' \
+            -bordercolor '#0A0A0F' -border 0 \
+            public/icons/icon-512.png
+
+          # icon-192.png
+          convert -resize 192x192 public/icons/icon-512.png \
+            public/icons/icon-192.png
+
+          # icon-maskable-512.png — avec padding 20% pour la zone sûre
+          convert -background '#0A0A0F' \
+            -fill '#00D4FF' -font DejaVu-Sans-Bold -pointsize 210 \
+            -size 512x512 -gravity Center label:'R' \
+            public/icons/icon-maskable-512.png
+
+          echo "Icons generated:"
+          ls -lh public/icons/
+
+      - name: Build
+        run: npm run build
         env:
           VITE_BASE: /Shift-Grid/
 

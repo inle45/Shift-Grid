@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fond sombre -->
+  <rect width="512" height="512" rx="90" fill="#0A0A0F"/>
+
+  <!-- Cercles décoratifs néon -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#00D4FF" stroke-width="3" opacity="0.15"/>
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#00D4FF" stroke-width="2" opacity="0.1"/>
+
+  <!-- Lettre R géante -->
+  <text
+    x="256"
+    y="340"
+    text-anchor="middle"
+    font-family="'Arial Black', Helvetica, sans-serif"
+    font-size="280"
+    font-weight="900"
+    fill="#00D4FF"
+    letter-spacing="-10"
+  >R</text>
+
+  <!-- Sous-texte RUSH -->
+  <text
+    x="256"
+    y="400"
+    text-anchor="middle"
+    font-family="'Arial', Helvetica, sans-serif"
+    font-size="52"
+    font-weight="700"
+    fill="#00D4FF"
+    opacity="0.6"
+    letter-spacing="18"
+  >USH</text>
+</svg>
