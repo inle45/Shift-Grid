@@ -19,7 +19,7 @@ const THRESHOLDS: Record<GameId, [number, number, number, number]> = {
   'tap-rush':        [8,  16, 26, 38],
   'swipe-chain':     [4,  9,  15, 22],
   'clicker':         [30, 60, 100, 150],
-  'pulse-collector': [5,  11, 18, 27],
+  'pulse-collector': [8,  18, 30, 45],
   'combo-blitz':     [10, 20, 32, 46],
 }
 const RATINGS      = ['D', 'C', 'B', 'A', 'S']

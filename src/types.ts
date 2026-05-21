@@ -47,8 +47,8 @@ export const GAME_CONFIGS: Record<GameId, GameConfig> = {
   'pulse-collector': {
     id: 'pulse-collector',
     name: 'PULSE',
-    tagline: 'Attrape les cercles avant qu\'ils disparaissent!',
-    duration: 10,
+    tagline: 'Tape quand le cercle est dans la zone !',
+    duration: 15,
     color: '#FF0066',
     icon: '◈',
   },
