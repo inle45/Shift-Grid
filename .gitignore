@@ -1,5 +1,8 @@
 node_modules
 dist
+# icons are generated at build time — ne pas commiter les PNG
+# (décommente si tu veux les versionner)
+# public/icons/*.png
 .env
 .env.local
 *.log
