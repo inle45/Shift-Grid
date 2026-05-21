@@ -3,3 +3,11 @@ dist
 .env
 .env.local
 *.log
+
+# Clé de signature Android — NE JAMAIS commiter
+*.keystore
+*.jks
+
+# Android build outputs
+android/app/release/
+android/.gradle/
