@@ -1,14 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GameId } from '../types'
+import type { MonState } from '../monetization'
 import { GAME_CONFIGS } from '../types'
 import { recordGame } from '../stats'
 import { sfx } from '../sfx'
+import Shop from './Shop'
 
 interface Props {
   score: number
   gameId: GameId
   onPlayAgain: () => void
   onMenu: () => void
+  monState: MonState
+  onMonStateChange: (s: MonState) => void
 }
 
 const THRESHOLDS: Record<GameId, [number, number, number, number]> = {
@@ -18,16 +22,9 @@ const THRESHOLDS: Record<GameId, [number, number, number, number]> = {
   'pulse-collector': [5,  11, 18, 27],
   'combo-blitz':     [10, 20, 32, 46],
 }
-
 const RATINGS      = ['D', 'C', 'B', 'A', 'S']
 const RATING_COLORS = ['#5A5A72', '#00D4FF', '#00FF87', '#FFD600', '#FF0066']
-const RATING_MSGS  = [
-  'Continue à t\'entraîner !',
-  'Pas mal du tout !',
-  'Bien joué !',
-  'Excellent !',
-  'LÉGENDAIRE !',
-]
+const RATING_MSGS  = ['Continue !', 'Pas mal !', 'Bien joué !', 'Excellent !', 'LÉGENDAIRE !']
 
 function getRatingIdx(score: number, gameId: GameId) {
   const t = THRESHOLDS[gameId]
@@ -38,27 +35,27 @@ function getRatingIdx(score: number, gameId: GameId) {
   return 0
 }
 
-export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu }: Props) {
+export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu, monState, onMonStateChange }: Props) {
   const cfg = GAME_CONFIGS[gameId]
-  const ratingIdx = getRatingIdx(score, gameId)
-  const ratingColor = RATING_COLORS[ratingIdx]
-  const msg = RATING_MSGS[ratingIdx]
+  const idx  = getRatingIdx(score, gameId)
+  const [showShop, setShowShop] = useState(false)
 
-  const resultRef = useRef<{ stats: ReturnType<typeof recordGame>['stats']; isRecord: boolean } | null>(null)
-  if (resultRef.current === null) {
-    resultRef.current = recordGame(gameId, score)
-  }
+  const resultRef = useRef<ReturnType<typeof recordGame> | null>(null)
+  if (!resultRef.current) resultRef.current = recordGame(gameId, score)
   const { stats, isRecord } = resultRef.current
+
+  // Coins earned this game
+  const coinsEarned = Math.max(3, Math.floor(score / 3))
 
   useEffect(() => {
     if (isRecord && score > 0) sfx.newRecord()
   }, [isRecord, score])
 
   return (
-    <div className="score-screen flex flex-col h-full items-center justify-between px-6 py-8 relative overflow-hidden">
-      {/* Ambient orbs */}
+    <div className="score-screen flex flex-col h-full items-center justify-between px-6 py-6 relative overflow-hidden">
+      {/* Orbs */}
       <div className="orb" style={{ width: 300, height: 300, background: `${cfg.color}10`, top: -100, left: -100 }} />
-      <div className="orb" style={{ width: 200, height: 200, background: `${ratingColor}10`, bottom: -60, right: -60, animationDelay: '-5s' }} />
+      <div className="orb" style={{ width: 200, height: 200, background: `${RATING_COLORS[idx]}10`, bottom: -60, right: -60, animationDelay: '-5s' }} />
 
       {/* Game name */}
       <div className="relative z-10 text-center w-full">
@@ -68,7 +65,6 @@ export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu }: Prop
 
       {/* Rating + score */}
       <div className="relative z-10 text-center flex-1 flex flex-col items-center justify-center gap-3">
-        {/* New record banner */}
         {isRecord && score > 0 && (
           <div
             className="px-4 py-1 rounded-full text-xs font-bold tracking-widest"
@@ -78,27 +74,43 @@ export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu }: Prop
           </div>
         )}
 
-        {/* Rating letter */}
         <div
           className="font-display font-black leading-none"
-          style={{ fontSize: '6rem', color: ratingColor, textShadow: `0 0 30px ${ratingColor}80, 0 0 80px ${ratingColor}40` }}
+          style={{ fontSize: '6rem', color: RATING_COLORS[idx], textShadow: `0 0 30px ${RATING_COLORS[idx]}80` }}
         >
-          {RATINGS[ratingIdx]}
+          {RATINGS[idx]}
         </div>
 
-        <div className="text-sm font-semibold" style={{ color: 'var(--muted)' }}>{msg}</div>
+        <div className="text-sm font-semibold" style={{ color: 'var(--muted)' }}>{RATING_MSGS[idx]}</div>
 
-        {/* Score */}
-        <div className="mt-1 text-center">
+        <div className="text-center">
           <div className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--muted)' }}>Score</div>
           <div className="score-big font-display text-6xl font-black" style={{ color: '#fff', textShadow: `0 0 20px ${cfg.color}60` }}>
             {score}
           </div>
         </div>
 
+        {/* Coins earned */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255,214,0,0.1)',
+            border: '1px solid rgba(255,214,0,0.3)',
+            borderRadius: 10,
+            padding: '5px 14px',
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#FFD600',
+          }}
+        >
+          🪙 +{coinsEarned} pièces gagnées
+        </div>
+
         {/* Stats row */}
         <div
-          className="flex gap-6 mt-2 px-5 py-3 rounded-2xl"
+          className="flex gap-6 px-5 py-3 rounded-2xl"
           style={{ background: 'var(--s2)' }}
         >
           <div className="text-center">
@@ -119,9 +131,26 @@ export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu }: Prop
       </div>
 
       {/* Buttons */}
-      <div className="relative z-10 w-full space-y-3">
-        {/* AdMob placeholder — décommenter pour la prod */}
-        {/* <AdBanner position="bottom" /> */}
+      <div className="relative z-10 w-full space-y-2.5">
+        {/* Power-up upsell */}
+        {!monState.activePowerup && (
+          <button
+            onPointerDown={() => setShowShop(true)}
+            style={{
+              width: '100%',
+              padding: '11px 16px',
+              borderRadius: 14,
+              background: 'rgba(168,85,247,0.1)',
+              border: '1.5px solid rgba(168,85,247,0.4)',
+              color: '#A855F7',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            ⚡ Activer un power-up — 🪙 {monState.coins}
+          </button>
+        )}
 
         <button
           onPointerDown={onPlayAgain}
@@ -139,15 +168,24 @@ export default function ScoreScreen({ score, gameId, onPlayAgain, onMenu }: Prop
           MENU PRINCIPAL
         </button>
 
-        {/* IAP placeholder */}
-        <button
-          className="w-full py-2 text-xs font-semibold"
-          style={{ color: 'var(--muted)' }}
-          onPointerDown={() => alert('Fonctionnalité à venir !')}
-        >
-          🚫 Enlever les pubs
-        </button>
+        {!monState.adsRemoved && (
+          <button
+            onPointerDown={() => setShowShop(true)}
+            className="w-full py-2 text-xs font-semibold"
+            style={{ color: 'var(--muted)' }}
+          >
+            🚫 Enlever les pubs — 2,99€
+          </button>
+        )}
       </div>
+
+      {showShop && (
+        <Shop
+          monState={monState}
+          onStateChange={onMonStateChange}
+          onClose={() => setShowShop(false)}
+        />
+      )}
     </div>
   )
 }
